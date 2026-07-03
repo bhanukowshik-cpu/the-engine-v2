@@ -313,7 +313,7 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
   size(); addEventListener('resize',size);
 
   // (1) lit by the scene: cool-white on the shadow side, warm sunrise gold on the lit side
-  const COOL=[248,250,253], WARM=[255,255,255];
+  const COOL=[244,246,249], WARM=[255,255,255];
   // light direction ~ the sun in the photo: lower-right, tipped toward the viewer
   const LX=0.575, LY=0.633, LZ=0.518;
 
@@ -365,7 +365,7 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
     for(const [i,j] of edges){
       const a=proj[i], b=proj[j], dd=(a.depth+b.depth)*0.5, al=dd*dd*0.16;
       if(al<0.015) continue;
-      ctx.strokeStyle=`rgba(230,236,246,${al})`;
+      ctx.strokeStyle=`rgba(248,250,253,${al})`;
       ctx.beginPath(); ctx.moveTo(a.sx,a.sy); ctx.lineTo(b.sx,b.sy); ctx.stroke();
     }
 
@@ -377,8 +377,7 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
       const cr=(COOL[0]+(WARM[0]-COOL[0])*w)|0,
             cg=(COOL[1]+(WARM[1]-COOL[1])*w)|0,
             cb=(COOL[2]+(WARM[2]-COOL[2])*w)|0;
-      const a=0.82 + p.depth*0.18;
-      ctx.fillStyle=`rgba(${cr},${cg},${cb},${a})`;
+      ctx.fillStyle=`rgb(${cr},${cg},${cb})`;
       ctx.beginPath(); ctx.arc(p.sx,p.sy, 1.4+p.depth*2.2, 0, Math.PI*2); ctx.fill();
     }
     ctx.shadowBlur=0;
