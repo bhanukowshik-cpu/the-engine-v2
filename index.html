@@ -73,7 +73,7 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
 /* ---------- RIGHT: photo scene ---------- */
 .right{position:relative;overflow:hidden;border-radius:28px;background:#0e1020 center/cover no-repeat url("Morning Image.png");align-self:center;justify-self:center;width:100%;max-width:560px;aspect-ratio:1/1;animation:photoIn 1s var(--e) .2s both}
 @keyframes photoIn{from{opacity:0;transform:translateY(26px) scale(.965)}to{opacity:1;transform:translateY(0) scale(1)}}
-.right::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(66% 58% at 50% 40%, rgba(6,7,14,.56) 0%, rgba(6,7,14,.2) 52%, rgba(6,7,14,0) 78%),linear-gradient(180deg, rgba(8,10,20,.6) 0%, rgba(8,10,20,.52) 46%, rgba(8,10,20,.56) 100%)}
+.right::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(58% 52% at 50% 38%, rgba(4,5,11,.8) 0%, rgba(4,5,11,.52) 38%, rgba(4,5,11,.16) 68%, rgba(4,5,11,0) 92%),linear-gradient(180deg, rgba(8,10,20,.55) 0%, rgba(8,10,20,.46) 46%, rgba(8,10,20,.52) 100%)}
 
 .device{position:absolute;left:50%;top:44%;translate:-50% -50%;width:52%;aspect-ratio:1/1;max-width:380px;min-width:220px}
 .device canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -298,7 +298,7 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
   step();
 })();
 
-/* ---------- dotted mesh sphere (device screen · color-state) ---------- */
+/* ---------- luminous white orb (dense opaque dots + soft white glow) ---------- */
 (function(){
   const c = document.getElementById('blobC');
   const ctx = c.getContext('2d');
@@ -312,12 +312,7 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
   }
   size(); addEventListener('resize',size);
 
-  // (1) lit by the scene: cool-white on the shadow side, warm sunrise gold on the lit side
-  const COOL=[244,246,249], WARM=[255,255,255];
-  // light direction ~ the sun in the photo: lower-right, tipped toward the viewer
-  const LX=0.575, LY=0.633, LZ=0.518;
-
-  const N = 240;
+  const N = 420;
   const golden = Math.PI*(3-Math.sqrt(5));
   const pts = [];
   for(let i=0;i<N;i++){
@@ -327,61 +322,28 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
     pts.push({x:Math.cos(th)*rY, y, z:Math.sin(th)*rY, phase: th*1.3 + y*2.1});
   }
 
-  // (3) precompute a light mesh: each point links to its ~3 nearest neighbours
-  const edges=[], eset=new Set();
-  for(let i=0;i<N;i++){
-    const d=[];
-    for(let j=0;j<N;j++){ if(j===i) continue;
-      const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, dz=pts[i].z-pts[j].z;
-      d.push([dx*dx+dy*dy+dz*dz, j]);
-    }
-    d.sort((a,b)=>a[0]-b[0]);
-    for(let k=0;k<3;k++){ const j=d[k][1], lo=Math.min(i,j), hi=Math.max(i,j), key=lo+'_'+hi;
-      if(!eset.has(key)){ eset.add(key); edges.push([lo,hi]); } }
-  }
-
   let rot=0, t=0;
-  function frame(now){
+  function frame(){
     rot += 0.0028;
     t += 0.012;
 
     ctx.clearRect(0,0,W,H);
     const cx=W*0.5, cy=H*0.5, base=Math.min(W,H)*0.27;
 
+    // dense, larger, fully OPAQUE white dots — opaque so nothing behind bleeds through
     const cosA=Math.cos(rot), sinA=Math.sin(rot);
     const proj = pts.map(p=>{
-      const m = 1 + 0.055*Math.sin(t + p.phase);
+      const m = 1 + 0.05*Math.sin(t + p.phase);
       const rx = p.x*cosA + p.z*sinA;
       const rz = -p.x*sinA + p.z*cosA;
-      const ry = p.y;
-      const depth = (rz+1)/2;
-      const warm = Math.pow(Math.max(0, rx*LX + ry*LY + rz*LZ), 1.4);
-      return {sx:cx+rx*m*base, sy:cy+ry*m*base, rz, depth, warm};
-    });
+      return {sx:cx+rx*m*base, sy:cy+p.y*m*base, rz, depth:(rz+1)/2};
+    }).sort((a,b)=>a.rz-b.rz);
 
-    // (3) faint neighbour lines, front-biased so the mesh stays a whisper
-    ctx.shadowBlur=0;
-    ctx.lineWidth=1;
-    for(const [i,j] of edges){
-      const a=proj[i], b=proj[j], dd=(a.depth+b.depth)*0.5, al=dd*dd*0.16;
-      if(al<0.015) continue;
-      ctx.strokeStyle=`rgba(248,250,253,${al})`;
-      ctx.beginPath(); ctx.moveTo(a.sx,a.sy); ctx.lineTo(b.sx,b.sy); ctx.stroke();
+    for(const p of proj){
+      const b=(216+39*p.depth)|0;   // back dots light, front pure white; neutral (no tint)
+      ctx.fillStyle=`rgb(${b},${b},${b})`;
+      ctx.beginPath(); ctx.arc(p.sx,p.sy, 1.7+p.depth*2.9, 0, Math.PI*2); ctx.fill();
     }
-
-    // solid white dots, back-to-front; each carries a soft dark contrast halo so
-    // the white reads on the lighter parts of the sky, not just the dark areas
-    const sorted=proj.slice().sort((a,b)=>a.rz-b.rz);
-    for(const p of sorted){
-      const w=p.warm;
-      const cr=(COOL[0]+(WARM[0]-COOL[0])*w)|0,
-            cg=(COOL[1]+(WARM[1]-COOL[1])*w)|0,
-            cb=(COOL[2]+(WARM[2]-COOL[2])*w)|0;
-      ctx.fillStyle=`rgb(${cr},${cg},${cb})`;
-      ctx.beginPath(); ctx.arc(p.sx,p.sy, 1.4+p.depth*2.2, 0, Math.PI*2); ctx.fill();
-    }
-    ctx.shadowBlur=0;
-
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
