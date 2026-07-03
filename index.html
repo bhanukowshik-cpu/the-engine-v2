@@ -72,7 +72,7 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
 /* ---------- RIGHT: photo scene ---------- */
 .right{position:relative;overflow:hidden;border-radius:28px;background:#0e1020 center/cover no-repeat url("Morning Image.png");align-self:center;justify-self:center;width:100%;max-width:560px;aspect-ratio:1/1;animation:photoIn 1s var(--e) .2s both}
 @keyframes photoIn{from{opacity:0;transform:translateY(26px) scale(.965)}to{opacity:1;transform:translateY(0) scale(1)}}
-.right::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg, rgba(8,10,20,.52) 0%, rgba(8,10,20,.38) 48%, rgba(8,10,20,.5) 100%)}
+.right::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg, rgba(8,10,20,.58) 0%, rgba(8,10,20,.48) 46%, rgba(8,10,20,.54) 100%)}
 
 .device{position:absolute;left:50%;top:44%;translate:-50% -50%;width:52%;aspect-ratio:1/1;max-width:380px;min-width:220px}
 .device canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -86,11 +86,6 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
 
 .tile{position:relative;background:rgba(22,20,30,.5);backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:11px 15px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.95);display:flex;align-items:center;gap:10px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
 /* speech-bubble tail on the corner facing the blob */
-.tile::before{content:"";position:absolute;width:11px;height:11px;background:rgba(26,24,34,.62);transform:rotate(45deg);border-radius:2px}
-.fp-vid .tile::before{right:16px;bottom:-4px}
-.fp-crm .tile::before{left:16px;bottom:-4px}
-.fp-call .tile::before{right:16px;top:-4px}
-.fp-content .tile::before{left:16px;top:-4px}
 
 /* calling frame sits below the blob, slightly larger */
 .fp-call .tile{font-size:14px;padding:13px 18px;gap:12px}
@@ -317,7 +312,7 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
   size(); addEventListener('resize',size);
 
   // (1) lit by the scene: cool-white on the shadow side, warm sunrise gold on the lit side
-  const COOL=[198,208,224], WARM=[255,255,255];
+  const COOL=[224,229,238], WARM=[255,255,255];
   // light direction ~ the sun in the photo: lower-right, tipped toward the viewer
   const LX=0.575, LY=0.633, LZ=0.518;
 
@@ -373,21 +368,20 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
       ctx.beginPath(); ctx.moveTo(a.sx,a.sy); ctx.lineTo(b.sx,b.sy); ctx.stroke();
     }
 
-    // (1)+(2) emissive light-blue dots, lit for form, additive glow, back-to-front
-    ctx.globalCompositeOperation='lighter';
+    // solid white dots, back-to-front; each carries a soft dark contrast halo so
+    // the white reads on the lighter parts of the sky, not just the dark areas
     const sorted=proj.slice().sort((a,b)=>a.rz-b.rz);
     for(const p of sorted){
       const w=p.warm;
       const cr=(COOL[0]+(WARM[0]-COOL[0])*w)|0,
             cg=(COOL[1]+(WARM[1]-COOL[1])*w)|0,
             cb=(COOL[2]+(WARM[2]-COOL[2])*w)|0;
-      const a=0.16 + p.depth*0.52;
-      ctx.shadowColor=`rgba(${cr},${cg},${cb},0.9)`;
-      ctx.shadowBlur=2 + p.depth*4 + w*3;
+      const a=0.52 + p.depth*0.48;
+      ctx.shadowColor='rgba(8,10,20,0.55)';
+      ctx.shadowBlur=3 + p.depth*3;
       ctx.fillStyle=`rgba(${cr},${cg},${cb},${a})`;
-      ctx.beginPath(); ctx.arc(p.sx,p.sy, 1.1+p.depth*2.0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(p.sx,p.sy, 1.3+p.depth*2.2, 0, Math.PI*2); ctx.fill();
     }
-    ctx.globalCompositeOperation='source-over';
     ctx.shadowBlur=0;
 
     requestAnimationFrame(frame);
