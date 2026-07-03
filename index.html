@@ -73,7 +73,7 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
 /* ---------- RIGHT: photo scene ---------- */
 .right{position:relative;overflow:hidden;border-radius:28px;background:#0e1020 center/cover no-repeat url("Morning Image.png");align-self:center;justify-self:center;width:100%;max-width:560px;aspect-ratio:1/1;animation:photoIn 1s var(--e) .2s both}
 @keyframes photoIn{from{opacity:0;transform:translateY(26px) scale(.965)}to{opacity:1;transform:translateY(0) scale(1)}}
-.right::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(58% 52% at 50% 38%, rgba(4,5,11,.8) 0%, rgba(4,5,11,.52) 38%, rgba(4,5,11,.16) 68%, rgba(4,5,11,0) 92%),linear-gradient(180deg, rgba(8,10,20,.55) 0%, rgba(8,10,20,.46) 46%, rgba(8,10,20,.52) 100%)}
+.right::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg, rgba(8,10,20,.4) 0%, rgba(8,10,20,.28) 46%, rgba(8,10,20,.42) 100%)}
 
 .device{position:absolute;left:50%;top:44%;translate:-50% -50%;width:52%;aspect-ratio:1/1;max-width:380px;min-width:220px}
 .device canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -330,7 +330,17 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
     ctx.clearRect(0,0,W,H);
     const cx=W*0.5, cy=H*0.5, base=Math.min(W,H)*0.27;
 
-    // dense, larger, fully OPAQUE white dots — opaque so nothing behind bleeds through
+    // opaque-white body: the orb reads pure white on ANY background, no dark backdrop
+    const gl=ctx.createRadialGradient(cx,cy,0,cx,cy,base*1.12);
+    gl.addColorStop(0,'rgba(255,255,255,0.95)');
+    gl.addColorStop(0.5,'rgba(255,255,255,0.62)');
+    gl.addColorStop(0.82,'rgba(255,255,255,0.24)');
+    gl.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=gl;
+    ctx.beginPath(); ctx.arc(cx,cy,base*1.12,0,Math.PI*2); ctx.fill();
+
+    // white dot-particles: merge into the bright core, pop as white specks toward the
+    // silhouette where the glow thins — gives the sphere its dotted texture, still white
     const cosA=Math.cos(rot), sinA=Math.sin(rot);
     const proj = pts.map(p=>{
       const m = 1 + 0.05*Math.sin(t + p.phase);
@@ -340,9 +350,9 @@ h1 .accent{font-style:italic;font-weight:400;color:var(--accent-ink)}
     }).sort((a,b)=>a.rz-b.rz);
 
     for(const p of proj){
-      const b=(216+39*p.depth)|0;   // back dots light, front pure white; neutral (no tint)
+      const b=(244+11*p.depth)|0;
       ctx.fillStyle=`rgb(${b},${b},${b})`;
-      ctx.beginPath(); ctx.arc(p.sx,p.sy, 1.7+p.depth*2.9, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(p.sx,p.sy, 1.5+p.depth*2.4, 0, Math.PI*2); ctx.fill();
     }
     requestAnimationFrame(frame);
   }
